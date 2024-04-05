@@ -1,29 +1,30 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, FSInputFile, InputMediaPhoto, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from config import ADMINS, PHONE_NUMBER
+from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_BOOKING_PHOTO
 
 import app.keyboards.userkb as kb
 from app.database.requests import user_yes_no, get_phone_number
 
 import asyncio
-import os
 
 # Роутер
 book_rt = Router()
 
+# Класс состояний для бронирования столика
 class Book(StatesGroup):
-    phone_number = State()
-    count_people = State()
-    time = State()
-    coment = State()
-    book = State()
-    
+    phone_number = State() # Номер телефона клиента
+    count_people = State() # Кол-во посетителей будет
+    time = State() # На какое время бронировать
+    coment = State() # Коментарий к бронированию
+    book = State() # Заключительная часть в бронировании
+
+# Обработчик для кнопки     
 @book_rt.callback_query(F.data == 'booking')
 async def main_booking(callback: CallbackQuery):
     
@@ -34,14 +35,16 @@ async def main_booking(callback: CallbackQuery):
     media = InputMediaPhoto(media=booking_photo, caption=text)
     
     await callback.message.edit_media(media = media, reply_markup=kb.book_button)
-    
+
+# Если бронь по телефону    
 @book_rt.callback_query(F.data == 'call_phone')
 async def book_call_phone(callback: CallbackQuery):
 
     text = f'Свяжитесь с нами и заброниируйте столик по этому номеру  {PHONE_NUMBER}'
     
-    await callback.message.edit_caption(caption=text, reply_markup=kb.back_book)
+    await callback.message.edit_caption(caption=text, reply_markup=kb.back_to_booking)
     
+# Если бронь через бота    
 @book_rt.callback_query(F.data == 'booking_new')
 async def booking_new(callback: CallbackQuery, state: FSMContext):
     
@@ -49,7 +52,7 @@ async def booking_new(callback: CallbackQuery, state: FSMContext):
         
         text = 'Введите ваш номер телефона, для обратной связи или нажмите на кнопку ниже, чтобы поделиться им'
         
-        first = await callback.message.answer(text = text, reply_markup=kb.phone_number_book)
+        first = await callback.message.answer(text = text, reply_markup=kb.phone_number_in_booking)
         await state.set_state(Book.phone_number)
         await state.update_data(first = first.message_id)
     else:
@@ -61,6 +64,7 @@ async def booking_new(callback: CallbackQuery, state: FSMContext):
         await state.update_data(phone_number = phone_number, first = first.message_id) 
         await state.set_state(Book.count_people)
 
+# Обработчик номера телефона
 @book_rt.message(Book.phone_number)
 async def phone_number(message: Message, state: FSMContext):
     
@@ -77,7 +81,8 @@ async def phone_number(message: Message, state: FSMContext):
     third = await message.answer(text = text, reply_markup=kb.count_people)
     await state.update_data(phone_number = phone_number, second = second, third = third.message_id)
     await state.set_state(Book.count_people)
-        
+
+# Обработчик кол-ва человек       
 @book_rt.message(Book.count_people)
 async def count_people(message: Message, state: FSMContext):
     count_people = message.text
@@ -90,6 +95,7 @@ async def count_people(message: Message, state: FSMContext):
     await state.update_data(count_people = count_people, four = four, five = five.message_id)
     await state.set_state(Book.time)
 
+# Обработчик на какое время бронировать
 @book_rt.message(Book.time)
 async def time_book(message: Message, state: FSMContext):
     
@@ -101,7 +107,7 @@ async def time_book(message: Message, state: FSMContext):
     await state.update_data(time_book = time_book, six = six, seven = seven.message_id)
     await state.set_state(Book.coment)
     
-
+# Обработчик коментария
 @book_rt.message(Book.coment)
 async def coment(message: Message, state: FSMContext):
         
@@ -119,7 +125,7 @@ async def coment(message: Message, state: FSMContext):
     await state.update_data(coment_message = coment_message, eight = eight, nine = nine.message_id)
     await state.set_state(Book.book)
 
-    
+# Обработчик для отправки брони админам   
 @book_rt.callback_query(lambda c: c.data and c.data.startswith('booking_'), Book.book)
 async def book_in_bot(callback: CallbackQuery, state: FSMContext):
     user_id = callback.data.split('_')[1]
@@ -128,17 +134,24 @@ async def book_in_bot(callback: CallbackQuery, state: FSMContext):
     second = data.get('second')
     
     if second is None:
-        messeges = [data["first"],  data["four"], data["five"], data["six"], data["seven"], data["eight"], data["nine"]]
+        messeges = ([data["first"],  data["four"], 
+                    data["five"], data["six"],
+                    data["seven"], data["eight"], data["nine"]])
     else:
-        messeges = [data["first"], data["second"], data["third"], data["four"], data["five"], data["six"], data["seven"],data["eight"], data["nine"]]
+        messeges = ([data["first"], data["second"], data["third"], 
+                    data["four"], data["five"], data["six"], 
+                    data["seven"],data["eight"], data["nine"]])
     
     yes_no_book = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text = 'Забронировано', callback_data=f'booked_{user_id}'), InlineKeyboardButton(text = 'Отказано', callback_data=f'denied_{user_id}')],
+        
+        [InlineKeyboardButton(text = 'Забронировано', callback_data=f'booked_{user_id}'), 
+        InlineKeyboardButton(text = 'Отказано', callback_data=f'denied_{user_id}')],
+        
         [InlineKeyboardButton(text = 'Полная посадка', callback_data=f'full_{user_id}')]
     ])
     text = f'<b>Новая бронь!\nИмя - {callback.message.from_user.first_name}\nНомер телефона - {data["phone_number"]}\nКол-во человек - {data["count_people"]}\nВремя - {data["time_book"]}\nКоментарий - {data["coment_message"]}\nUserId - {user_id}</b>'
-    for admin in ADMINS:
-        await callback.bot.send_message(chat_id=admin, text=text, reply_markup=yes_no_book)
+    
+    await callback.bot.send_message(chat_id=MAIN_ADMIN, text=text, reply_markup=yes_no_book)
     
     text_succes = 'Бронь успешно отправлена!'
     await callback.answer(text = text_succes, show_alert=True)
@@ -147,6 +160,7 @@ async def book_in_bot(callback: CallbackQuery, state: FSMContext):
     except:
         pass
 
+# Обработчик успешной брони
 @book_rt.callback_query(lambda c: c.data and c.data.startswith('booked_'))
 async def booked(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -154,11 +168,14 @@ async def booked(callback: CallbackQuery):
     text = 'Ваша бронь одобрена, ждем вас!'
     
     message1 = await callback.bot.send_message(chat_id=user_id, text=text)
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    
+    await callback.bot.delete_message(chat_id=callback.from_user.id, 
+                                    message_id=callback.message.message_id)
     
     await asyncio.sleep()
     await callback.bot.delete_message(chat_id=user_id, message_id=message1.message_id)
-    
+
+# Обработчик отклоненной брони    
 @book_rt.callback_query(lambda c: c.data and c.data.startswith('denied_'))
 async def booked(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -166,8 +183,11 @@ async def booked(callback: CallbackQuery):
     text = 'Ваша бронь отклонена, возможно в заполненной вами анкете, были какие-либо проблемы. Попробуйте связаться с нами чуть позже по телефону'
     
     await callback.bot.send_message(chat_id=user_id, text=text)
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    
+    await callback.bot.delete_message(chat_id=callback.from_user.id,
+                                    message_id=callback.message.message_id)
 
+# Обработчик полной посадки
 @book_rt.callback_query(lambda c: c.data and c.data.startswith('full_'))
 async def booked(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -175,6 +195,8 @@ async def booked(callback: CallbackQuery):
     text = 'К сожалению, на выбранное вами время у нас полная посадка...'
     
     await callback.bot.send_message(chat_id=user_id, text=text)
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    
+    await callback.bot.delete_message(chat_id=callback.from_user.id, 
+                                    message_id=callback.message.message_id)
     
     

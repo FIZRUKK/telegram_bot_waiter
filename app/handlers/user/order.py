@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
-from config import ADMINS, PHONE_NUMBER
+from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_ORDER_PHOTO
 
 import app.keyboards.userkb as kb
@@ -15,16 +15,18 @@ import asyncio
 
 # Роутер
 order_rt = Router()
-    
+
+# Класс состояний для заказа   
 class Order(StatesGroup):
-    pozition = State()
-    phone_number = State()
-    adres = State()
-    time = State()
-    coment = State()
-    ordering = State()
-    ordering_admin = State()
-    
+    pozition = State() # Позиции в заказе
+    phone_number = State() # номер телефона клиента
+    adres = State() # адрес доставки
+    time = State() # в какое время осуществить доставку
+    coment = State() # коментарий к заказу
+    ordering = State() # отпарвка заказа администратору
+    ordering_admin = State() # заказ у админа
+
+# Обработчик для кнопки       
 @order_rt.callback_query(F.data == 'oreder')
 async def main_order(callback: CallbackQuery):
     order_photo = MAIN_ORDER_PHOTO
@@ -34,6 +36,7 @@ async def main_order(callback: CallbackQuery):
     
     await callback.message.edit_media(media = media, reply_markup=kb.order_button)
 
+# Если бронь через бота 
 @order_rt.callback_query(F.data == 'order_in_bot')
 async def order_in_bot(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Order.pozition)
@@ -43,6 +46,7 @@ async def order_in_bot(callback: CallbackQuery, state: FSMContext):
     
     await state.update_data(first = first.message_id)
 
+# Обработчик для позиции
 @order_rt.message(Order.pozition)
 async def pozition(message: Message, state: FSMContext):
     second = message.message_id
@@ -58,9 +62,11 @@ async def pozition(message: Message, state: FSMContext):
         text = f'<b>Ваш номер у нас есть,введите адрес доставки или укажите, что вы заберете самовывозом\nПример\n<i>Заволжье. ул.Грунина. д.12б кв.207. 6 подъезд</i></b>'
         thread = await message.answer(text = text, reply_markup=kb.order_button_adres_if_reg)
         
-        await state.update_data(phone_number = phone_number, thread = thread.message_id, pozition = pozition, second = second) 
+        await state.update_data(phone_number = phone_number, thread = thread.message_id, 
+                                pozition = pozition, second = second) 
         await state.set_state(Order.adres)
-    
+
+# Обработчик номера телефона    
 @order_rt.message(Order.phone_number)
 async def phone_number(message: Message, state: FSMContext):
     
@@ -83,6 +89,7 @@ async def phone_number(message: Message, state: FSMContext):
     await state.update_data(four = four, phone_number = phone_number, five = five.message_id)
     await state.set_state(Order.adres)
 
+# Обработчик адреса
 @order_rt.message(F.text == 'Мой адрес', Order.adres)
 async def adres_my_adres(message: Message, state: FSMContext):
     
@@ -95,7 +102,8 @@ async def adres_my_adres(message: Message, state: FSMContext):
     
     await state.update_data(six = six, adres = adres, seven = seven.message_id)
     await state.set_state(Order.time)
-
+    
+# Обработчик если самовывоз
 @order_rt.message(F.text == 'Самовывоз', Order.adres)
 async def adres_sam(message: Message, state: FSMContext):
     
@@ -109,6 +117,7 @@ async def adres_sam(message: Message, state: FSMContext):
     await state.update_data(six = six, adres = adres, seven = seven.message_id)
     await state.set_state(Order.time)
 
+# Обработчик на какое время привезти заказ
 @order_rt.message(Order.time)
 async def time_delivery(message: Message, state: FSMContext):
     
@@ -120,7 +129,8 @@ async def time_delivery(message: Message, state: FSMContext):
     
     await state.update_data(eight = eight, time_delivery = time_delivery, nine = nine.message_id)
     await state.set_state(Order.coment)
-    
+
+# Обработчик коментария к заказу    
 @order_rt.message(Order.coment)
 async def coment(message: Message, state: FSMContext):
     
@@ -137,10 +147,17 @@ async def coment(message: Message, state: FSMContext):
     four = data.get('four')
     
     if four is None:
-        messeges = [data["first"], data["second"], data["thread"], data["six"], data["seven"],data["eight"], data["nine"], ten]
+        messeges = ([data["first"], data["second"],
+                    data["thread"], data["six"], 
+                    data["seven"],data["eight"], 
+                    data["nine"], ten])
         
     else:
-        messeges = [data["first"], data["second"], data["thread"], data["four"], data["five"], data["six"], data["seven"],data["eight"], data["nine"], ten]
+        messeges = ([data["first"], data["second"], 
+                    data["thread"], data["four"], 
+                    data["five"], data["six"], 
+                    data["seven"],data["eight"], 
+                    data["nine"], ten])
         
     text = f'<b>Отлично, ваши данные по заказу сохранены! Отправить заказ администратору?\n\nПозиции - {pozition}\nКонтакт - {phone_number}\nСпособ получения - {adres}\nВремя получения заказа - {time_delivery}\nКоментарий к заказу - {coment_delivery}\n\nВсе верно?</b>'
     
@@ -150,6 +167,7 @@ async def coment(message: Message, state: FSMContext):
     await state.update_data(coment_delivery = coment_delivery)
     await state.set_state(Order.ordering)
 
+# Обработчик отправки заказа
 @order_rt.callback_query(F.data == 'post_order', Order.ordering)
 async def ordering(callback: CallbackQuery, state: FSMContext):
     
@@ -169,17 +187,23 @@ async def ordering(callback: CallbackQuery, state: FSMContext):
     coment_delivery = data['coment_delivery']
     
     order_yes_no_admin = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Принять', callback_data=f'accept_{user_id}'), InlineKeyboardButton(text='Отклонить', callback_data=f'overrule_{user_id}')],
+        
+        [InlineKeyboardButton(text='Принять', callback_data=f'accept_{user_id}'), 
+        InlineKeyboardButton(text='Отклонить', callback_data=f'overrule_{user_id}')],
+        
         [InlineKeyboardButton(text = 'В стоп-листе', callback_data=f'stoplist_{user_id}')]
+        
     ])
     
     text = f'<b>Новый заказ\n\nПозиции - {pozition}\nКонтакт - {phone_number}\nСпособ получения - {adres}\nВремя получения заказа - {time_delivery}\nКоментарий к заказу - {coment_delivery}</b>' 
     
-    for admin in ADMINS:
-        await callback.bot.send_message(chat_id=admin, text = text, reply_markup=order_yes_no_admin)
+    await callback.bot.send_message(chat_id=MAIN_ADMIN, 
+                                text = text, 
+                                reply_markup=order_yes_no_admin)
     
     await state.clear()
 
+# Обработчик если клиент передумал заказывать
 @order_rt.callback_query(F.data == 'no_order', Order.ordering)
 async def ordering(callback: CallbackQuery, state: FSMContext):
     
@@ -190,7 +214,8 @@ async def ordering(callback: CallbackQuery, state: FSMContext):
     await callback.bot.delete_message(chat_id=user_id, message_id=callback.message.message_id)
     
     await state.clear()
-    
+
+# Обработчик если администратор принял заказ    
 @order_rt.callback_query(lambda c: c.data and c.data.startswith('accept_'))
 async def accept(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -198,11 +223,13 @@ async def accept(callback: CallbackQuery):
     text = f'<b>Ваш заказ принят, мы скоро его сделаем!</b>'
     messageuser = await callback.bot.send_message(chat_id=user_id, text = text)
     
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    await callback.bot.delete_message(chat_id=callback.from_user.id,
+                                    message_id=callback.message.message_id)
     await asyncio.sleep(600)
     
     await callback.bot.delete_message(chat_id=user_id, message_id=messageuser.message_id)
-    
+
+# Обработчик если администратор отклонил заказ      
 @order_rt.callback_query(lambda c: c.data and c.data.startswith('overrule_'))
 async def overrule(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -210,11 +237,13 @@ async def overrule(callback: CallbackQuery):
     text = f'<b>Ваш заказ отклонен, видимо произошли какие-либо проблемы...</b>'
     messageuser = await callback.bot.send_message(chat_id=user_id, text = text)
     
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    await callback.bot.delete_message(chat_id=callback.from_user.id,
+                                      message_id=callback.message.message_id)
     await asyncio.sleep(600)
     
     await callback.bot.delete_message(chat_id=user_id, message_id=messageuser.message_id)
-    
+
+# Обработчик если заказ в стоп-листе      
 @order_rt.callback_query(lambda c: c.data and c.data.startswith('stoplist_'))
 async def stoplist(callback: CallbackQuery):
     user_id = callback.data.split('_')[1]
@@ -222,15 +251,17 @@ async def stoplist(callback: CallbackQuery):
     text = f'<b>К сожалению, какие-то позиции попали в стоп лист, попробуйте нам позвонить, мы решим этот вопрос</b>'
     messageuser = await callback.bot.send_message(chat_id=user_id, text = text)
     
-    await callback.bot.delete_message(chat_id=callback.from_user.id, message_id=callback.message.message_id)
+    await callback.bot.delete_message(chat_id=callback.from_user.id,
+                                    message_id=callback.message.message_id)
     await asyncio.sleep(600)
     
     await callback.bot.delete_message(chat_id=user_id, message_id=messageuser.message_id)
-    
+
+# Обработчик если заказ по телефону будет
 @order_rt.callback_query(F.data == 'call_phone_order')
 async def call_phone_order(callback: CallbackQuery):
     
     text = f'<b>Сделайте заказ позвонив по данному номеру!\n{PHONE_NUMBER}</b>'
     
-    await callback.message.edit_caption(caption=text, reply_markup=kb.back_order)
+    await callback.message.edit_caption(caption=text, reply_markup=kb.back_to_ordering)
     
