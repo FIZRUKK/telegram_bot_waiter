@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import  CallbackQuery, InputMediaPhoto
 
-import app.keyboards.menu_buttons as kb
+import app.keyboards.menu_buttons as kb_punkt_menu
 from app.media.photos_id import (NEW_MENU_PHOTO, BURGERS_MENU_PHOTO, HOT_DISHES_MENU_PHOTO,
                                 HOT_ROLLS_MENU_PHOTO, OPEN_ROLLS_MENU_PHOTO, 
                                 CLOSSE_ROLLS_MENU_PHOTO,
@@ -19,7 +19,7 @@ async def new(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=new_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_in_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Бургеры
 @punkt_rt.callback_query(F.data == 'burgers')
@@ -29,7 +29,7 @@ async def burgers(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=burgers_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_in_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Горячие блюда
 @punkt_rt.callback_query(F.data == 'hot_dishes')
@@ -39,7 +39,7 @@ async def hot_dishes(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=hot_dishes_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Горячие роллы
 @punkt_rt.callback_query(F.data == 'hot_rolls')
@@ -49,7 +49,7 @@ async def hot_rolls(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=hot_rolls_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
     
 # Открытые роллы
 @punkt_rt.callback_query(F.data == 'open_rolls')
@@ -59,7 +59,7 @@ async def open_rolls(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=open_rolls_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Закрытые роллы   
 @punkt_rt.callback_query(F.data == 'closse_rolls')
@@ -69,7 +69,7 @@ async def closse_rolls(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=closse_rolls_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
     
 # Пасты
 @punkt_rt.callback_query(F.data == 'pasts')
@@ -79,7 +79,7 @@ async def pasts(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=pasts_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Пиццы
 @punkt_rt.callback_query(F.data == 'pizzs')
@@ -89,7 +89,7 @@ async def pizzs(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=pizzs_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Салаты    
 @punkt_rt.callback_query(F.data == 'salads')
@@ -99,7 +99,7 @@ async def salads(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=salads_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Снэки    
 @punkt_rt.callback_query(F.data == 'snacks')
@@ -109,7 +109,7 @@ async def snacks(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=snacks_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Нарезки    
 @punkt_rt.callback_query(F.data == 'slices')
@@ -119,7 +119,7 @@ async def slices(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=slices_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)
 
 # Соусы    
 @punkt_rt.callback_query(F.data == 'sous')
@@ -129,4 +129,4 @@ async def sous(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=sous_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb_punkt_menu.back_in_menu)

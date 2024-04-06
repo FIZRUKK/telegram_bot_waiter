@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 
 from app.database.requests import input_user
-import app.keyboards.main_buttons as kb
+import app.keyboards.main_buttons as kb_registration
 
 import asyncio
 
@@ -31,7 +31,7 @@ async def registration(callback: CallbackQuery, state: FSMContext):
     text = '<b>Пройдите процедуру регистрации, чтобы в дальнейшем, вы смогли комфортно заказывать еду!\n\nПоделитесь, своим номером телефона или напишите в формате\n+7 930 695 00-00</b>'
     
     first_message = await callback.message.answer(text = text, 
-                                                reply_markup=kb.phone_number_in_registration)
+                                    reply_markup=kb_registration.phone_number_in_registration)
     
     await state.update_data(first_message = first_message.message_id)
 
@@ -49,10 +49,12 @@ async def phone_number(message: Message, state: FSMContext):
         # Если контакта нет, записываем текст сообщения
             phone_number = message.text
             
-        thred_message = await message.answer(text = text, reply_markup=kb.finalize_button)
+        third_message = await message.answer(text = text, 
+                                            reply_markup=kb_registration.finalize_button)
+        
         await state.update_data(second_message = message.message_id, 
                                 phone_number = phone_number,
-                                thred_message = thred_message.message_id)
+                                third_message = third_message.message_id)
         
         await state.set_state(Registration.adres)
     else:
@@ -76,10 +78,11 @@ async def adres(message: Message, state: FSMContext):
         
         text = '<b>Отлично, укажите вашу дату рождения, это позволит нам подготовить самые лучшие подарки!\n\n<i>Образец: ГГГГ:ММ:ДД</i></b>'
         
-        five_message = await message.answer(text = text, reply_markup=kb.stop_button)
+        fifth_message = await message.answer(text = text, 
+                                        reply_markup=kb_registration.finalize_button)
         
-        await state.update_data(four_message = message.message_id, 
-                                five_message = five_message.message_id, 
+        await state.update_data(fourth_message = message.message_id, 
+                                fifth_message = fifth_message.message_id, 
                                 adres = message.text)
         
         await state.set_state(Registration.birthday)
@@ -88,7 +91,7 @@ async def adres(message: Message, state: FSMContext):
         back = await message.answer(text = text_close)
         
         messages = ([data["first_message"], data["second_message"], 
-                    data["thred_message"], message.message_id])
+                    data["third_message"], message.message_id])
         
         await message.bot.delete_messages(chat_id=message.from_user.id, message_ids=messages)
         
@@ -102,7 +105,7 @@ async def adres(message: Message, state: FSMContext):
 @reg_rt.message(Registration.birthday)
 async def birthday(message: Message, state: FSMContext):
     
-    await state.update_data(six_message = message.message_id, birthday = message.text)
+    await state.update_data(sixth_message = message.message_id, birthday = message.text)
     
     data = await state.get_data()
     
@@ -111,19 +114,19 @@ async def birthday(message: Message, state: FSMContext):
     birthday = data["birthday"]
     
     text = f'<b>Спасибо за регистрацию, вот ваши данные которые вы ввели!<i>Номер телефона - {phone_number}</i>\n<i>Адрес - {adres}</i><i>День рождения - {birthday}</i></b>'
-    seven_message = await message.answer(text = text)
+    seventh_message = await message.answer(text = text)
     
     
     messages = ([data["first_message"], data["second_message"],
-                data["thred_message"], data["four_message"],
-                data["five_message"], data["six_message"]])
+                data["third_message"], data["fourth_message"],
+                data["fifth_message"], data["sixth_message"]])
     
     await message.bot.delete_messages(chat_id=message.from_user.id, message_ids=messages)
     
     await asyncio.sleep(5)
     
     await message.bot.delete_message(chat_id=message.from_user.id, 
-                                    message_id=seven_message.message_id)
+                                    message_id=seventh_message.message_id)
     
     await input_user(message.from_user.id, message.from_user.username, 
                     message.from_user.first_name, 

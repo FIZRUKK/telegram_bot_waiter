@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_BOOKING_PHOTO
 
-import app.keyboards.booking_buttons as kb
+import app.keyboards.booking_buttons as kb_booking
 from app.database.requests import user_yes_no, get_phone_number
 
 import asyncio
@@ -34,7 +34,7 @@ async def main_booking(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=booking_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.booking_button)
+    await callback.message.edit_media(media = media, reply_markup=kb_booking.booking_button)
 
 # Если бронь по телефону    
 @book_rt.callback_query(F.data == 'call_phone')
@@ -42,7 +42,7 @@ async def book_call_phone(callback: CallbackQuery):
 
     text = f'Свяжитесь с нами и заброниируйте столик по этому номеру  {PHONE_NUMBER}'
     
-    await callback.message.edit_caption(caption=text, reply_markup=kb.back_to_booking)
+    await callback.message.edit_caption(caption=text, reply_markup=kb_booking.back_to_booking)
     
 # Если бронь через бота    
 @book_rt.callback_query(F.data == 'booking_new')
@@ -52,23 +52,25 @@ async def booking_new(callback: CallbackQuery, state: FSMContext):
         
         text = 'Введите ваш номер телефона, для обратной связи или нажмите на кнопку ниже, чтобы поделиться им'
         
-        first = await callback.message.answer(text = text, reply_markup=kb.phone_number_in_booking)
+        first_message = await callback.message.answer(text = text, 
+                                        reply_markup=kb_booking.phone_number_in_booking)
         await state.set_state(Book.phone_number)
-        await state.update_data(first = first.message_id)
+        await state.update_data(first_message = first_message.message_id)
     else:
         phone_number = await get_phone_number(callback.from_user.id)
         
         text = 'Ваш номер у нас есть, выберите на сколько персон столик?'
         
-        first = await callback.message.answer(text=text, reply_markup=kb.count_people)
-        await state.update_data(phone_number = phone_number, first = first.message_id) 
+        first_message = await callback.message.answer(text=text, reply_markup=kb_booking.count_people)
+        await state.update_data(phone_number = phone_number, first_message = first_message.message_id) 
         await state.set_state(Book.count_people)
 
 # Обработчик номера телефона
 @book_rt.message(Book.phone_number)
 async def phone_number(message: Message, state: FSMContext):
     
-    second = message.message_id
+    second_message = message.message_id
+    
     if message.content_type == 'contact':
         # Если есть контакт, записываем номер телефона
         phone_number = message.contact.phone_number
@@ -78,21 +80,26 @@ async def phone_number(message: Message, state: FSMContext):
     
     text = 'Ваш номер успешно записан, выберите на сколько персон столик?'
     
-    third = await message.answer(text = text, reply_markup=kb.count_people)
-    await state.update_data(phone_number = phone_number, second = second, third = third.message_id)
+    third_message = await message.answer(text = text, reply_markup=kb_booking.count_people)
+    
+    await state.update_data(phone_number = phone_number, second_message = second_message, 
+                            third_message = third_message.message_id)
+    
     await state.set_state(Book.count_people)
 
 # Обработчик кол-ва человек       
 @book_rt.message(Book.count_people)
 async def count_people(message: Message, state: FSMContext):
     count_people = message.text
-    four = message.message_id
+    fourth_message = message.message_id
 
     text = 'Отлично, введите на какое время вам забронировать?\nПример: 18 апреля 18:00'
     
-    five = await message.answer(text = text, reply_markup=ReplyKeyboardRemove())
+    fifth_message = await message.answer(text = text, reply_markup=ReplyKeyboardRemove())
     
-    await state.update_data(count_people = count_people, four = four, five = five.message_id)
+    await state.update_data(count_people = count_people, fourth_message = fourth_message,
+                            fifth_message = fifth_message.message_id)
+    
     await state.set_state(Book.time)
 
 # Обработчик на какое время бронировать
@@ -100,11 +107,14 @@ async def count_people(message: Message, state: FSMContext):
 async def time_book(message: Message, state: FSMContext):
     
     time_book = message.text
-    six = message.message_id
+    sixth_message = message.message_id
     
     text = 'Отлично, введите коментарий к бронированию, ваши пожелания'
-    seven = await message.answer(text = text)
-    await state.update_data(time_book = time_book, six = six, seven = seven.message_id)
+    seventh_message = await message.answer(text = text)
+    
+    await state.update_data(time_book = time_book, sixth_message = sixth_message,
+                            seventh_message = seventh_message.message_id)
+    
     await state.set_state(Book.coment)
     
 # Обработчик коментария
@@ -112,7 +122,7 @@ async def time_book(message: Message, state: FSMContext):
 async def coment(message: Message, state: FSMContext):
         
     coment_message = message.text
-    eight = message.message_id
+    eighth_message = message.message_id
     
     button = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text = 'Подтвердить бронь', callback_data=f'booking_{message.from_user.id}')]
@@ -120,9 +130,11 @@ async def coment(message: Message, state: FSMContext):
     
     text = 'Спасибо, ваши данные для брони успешно сохранены! Отправте их для подтверждения'
     
-    nine = await message.answer(text = text,reply_markup=button)
+    ninth_message = await message.answer(text = text,reply_markup=button)
     
-    await state.update_data(coment_message = coment_message, eight = eight, nine = nine.message_id)
+    await state.update_data(coment_message = coment_message, eighth_message = eighth_message, 
+                        ninth_message = ninth_message.message_id)
+    
     await state.set_state(Book.book)
 
 # Обработчик для отправки брони админам   
@@ -131,16 +143,16 @@ async def book_in_bot(callback: CallbackQuery, state: FSMContext):
     user_id = callback.data.split('_')[1]
     data = await state.get_data()
     
-    second = data.get('second')
+    second_message = data.get('second_message')
     
-    if second is None:
-        messeges = ([data["first"],  data["four"], 
-                    data["five"], data["six"],
-                    data["seven"], data["eight"], data["nine"]])
+    if second_message is None:
+        messeges = ([data["first_message"],  data["fourth_message"], 
+                    data["fifth_message"], data["sixth_message"],
+                    data["seventh_message"], data["eighth_message"], data["ninth_message"]])
     else:
-        messeges = ([data["first"], data["second"], data["third"], 
-                    data["four"], data["five"], data["six"], 
-                    data["seven"],data["eight"], data["nine"]])
+        messeges = ([data["first_message"], data["second_message"], data["third_message"], 
+                    data["fourth_message"], data["fifth_message"], data["sixth_message"], 
+                    data["seventh_message"],data["eighth_message"], data["ninth_message"]])
     
     yes_no_book = InlineKeyboardMarkup(inline_keyboard=[
         

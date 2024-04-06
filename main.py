@@ -14,7 +14,7 @@ from app.handlers.user.booking import book_rt
 from app.handlers.user.menu.menu import menu_rt
 from app.handlers.user.regestration import reg_rt
 from app.handlers.user.menu.menu_punkt import punkt_rt 
-from app.handlers.user.start.start_in_cafe import start_in_cafe_rt
+from app.handlers.user.start.start_in_place import start_in_cafe_rt
 from app.handlers.user.start.start_in_home import start_in_home_rt
 
 # импорты модулей

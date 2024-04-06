@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_ORDER_PHOTO
 
-import app.keyboards.order_buttons as kb
+import app.keyboards.order_buttons as kb_order
 from app.database.requests import user_yes_no, get_phone_number, get_adres_user
 
 import asyncio
@@ -34,7 +34,7 @@ async def main_order(callback: CallbackQuery):
     text = f'<b>Привет</b>'
     media = InputMediaPhoto(media=order_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.order_button)
+    await callback.message.edit_media(media = media, reply_markup=kb_order.order_button)
 
 # Если бронь через бота 
 @order_rt.callback_query(F.data == 'order_in_bot')
@@ -42,35 +42,39 @@ async def order_in_bot(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Order.pozition)
     
     text = f'<b>Введите, чтобы вы хотели заказать, позиция - кол-во штук\n\nПример\n<i>Филадельфия с огурцом - 1 шт, Картошка фри большая - 2 шт.</i></b>'
-    first = await callback.message.answer(text=text)
+    first_message = await callback.message.answer(text=text)
     
-    await state.update_data(first = first.message_id)
+    await state.update_data(first_message = first_message.message_id)
 
 # Обработчик для позиции
 @order_rt.message(Order.pozition)
 async def pozition(message: Message, state: FSMContext):
-    second = message.message_id
+    second_message = message.message_id
     pozition = message.text
     
     if await user_yes_no(message.from_user.id):
         text = f'<b>Введите ваш номер телефона, для обратной связи или нажмите на кнопку ниже, чтобы поделиться им</b>'
-        thread = await message.answer(text = text, reply_markup=kb.phone_number_in_order)
+        third_message = await message.answer(text = text, reply_markup=kb_order.phone_number_in_order)
         await state.set_state(Order.phone_number)
-        await state.update_data(second = second,thread = thread.message_id, pozition = pozition)
+        
+        await state.update_data(second = second_message, 
+                                third_message = third_message.message_id, pozition = pozition)
     else:
         phone_number = await get_phone_number(message.from_user.id)
         text = f'<b>Ваш номер у нас есть,введите адрес доставки или укажите, что вы заберете самовывозом\nПример\n<i>Заволжье. ул.Грунина. д.12б кв.207. 6 подъезд</i></b>'
-        thread = await message.answer(text = text, reply_markup=kb.order_button_adres_if_reg)
+        third_message = await message.answer(text = text, reply_markup=kb_order.order_button_adres_if_reg)
         
-        await state.update_data(phone_number = phone_number, thread = thread.message_id, 
-                                pozition = pozition, second = second) 
+        await state.update_data(phone_number = phone_number, 
+                                third_message = third_message.message_id, 
+                                pozition = pozition, second = second_message) 
+        
         await state.set_state(Order.adres)
 
 # Обработчик номера телефона    
 @order_rt.message(Order.phone_number)
 async def phone_number(message: Message, state: FSMContext):
     
-    four = message.message_id
+    fourth_message = message.message_id
     
     if message.content_type == 'contact':
         # Если есть контакт, записываем номер телефона
@@ -82,59 +86,71 @@ async def phone_number(message: Message, state: FSMContext):
     text = f'<b>Ваш номер успешно записан, введите адрес доставки или укажите, что вы заберете самовывозом\nПример\n<i>Заволжье. ул.Грунина. д.12б кв.207. 6 подъезд</i></b>'
     
     if await user_yes_no(message.from_user.id):  
-        five = await message.answer(text = text, reply_markup=kb.order_button_adres_if_not_reg)
+        fifth_message = await message.answer(text = text, reply_markup=kb_order.order_button_adres_if_not_reg)
     else:
-        five = await message.answer(text = text, reply_markup=kb.order_button_adres_if_reg)
+        fifth_message = await message.answer(text = text, reply_markup=kb_order.order_button_adres_if_reg)
     
-    await state.update_data(four = four, phone_number = phone_number, five = five.message_id)
+    await state.update_data(fourth_message = fourth_message, 
+                            phone_number = phone_number, 
+                            fifth_message = fifth_message.message_id)
+    
     await state.set_state(Order.adres)
 
 # Обработчик адреса
 @order_rt.message(F.text == 'Мой адрес', Order.adres)
 async def adres_my_adres(message: Message, state: FSMContext):
     
-    six = message.message_id
+    sixth_message = message.message_id
     adres = await get_adres_user(message.from_user.id)
     
     text = f'<b>Отлично, мы записали ваш адрес. Введите на какое время сделать доставку?\n\nПример\n<i>18 апреля к 18:00</i></b>'
     
-    seven = await message.answer(text = text, reply_markup=kb.order_time)
+    seventh_message = await message.answer(text = text, reply_markup=kb_order.order_time)
     
-    await state.update_data(six = six, adres = adres, seven = seven.message_id)
+    await state.update_data(sixth_message = sixth_message, 
+                            adres = adres, 
+                            seventh_message = seventh_message.message_id)
+    
     await state.set_state(Order.time)
     
 # Обработчик если самовывоз
 @order_rt.message(F.text == 'Самовывоз', Order.adres)
 async def adres_sam(message: Message, state: FSMContext):
     
-    six = message.message_id
+    sixth_message = message.message_id
     adres = message.text
     
     text = f'<b>Отлично, мы записали ваш адрес. Введите на какое время сделать доставку/самовывоз?\n\nПример\n<i>18 апреля к 18:00</i></b>'
     
-    seven = await message.answer(text = text, reply_markup=kb.order_time)
+    seventh_message = await message.answer(text = text, reply_markup=kb_order.order_time)
     
-    await state.update_data(six = six, adres = adres, seven = seven.message_id)
+    await state.update_data(six = sixth_message, 
+                            adres = adres, 
+                            seventh_message = seventh_message.message_id)
+    
     await state.set_state(Order.time)
 
 # Обработчик на какое время привезти заказ
 @order_rt.message(Order.time)
 async def time_delivery(message: Message, state: FSMContext):
     
-    eight = message.message_id
+    eighth_message = message.message_id
     time_delivery = message.text
     
     text = f'<b>Отлично и наконец оставте коментарий к заказу\n\nПример\n<i>Кол-во приборов... Без помидор</i></b>'
-    nine = await message.answer(text = text, reply_markup=ReplyKeyboardRemove())
+    ninth_message = await message.answer(text = text, reply_markup=ReplyKeyboardRemove())
     
-    await state.update_data(eight = eight, time_delivery = time_delivery, nine = nine.message_id)
+    await state.update_data(eighth_message = eighth_message, 
+                            time_delivery = time_delivery, 
+                            ninth_message = ninth_message.message_id)
+    
     await state.set_state(Order.coment)
 
 # Обработчик коментария к заказу    
 @order_rt.message(Order.coment)
 async def coment(message: Message, state: FSMContext):
     
-    ten = message.message_id
+    tenth_message = message.message_id
     coment_delivery = message.text
     
     data = await state.get_data()
@@ -144,24 +160,23 @@ async def coment(message: Message, state: FSMContext):
     adres = data['adres']
     time_delivery = data['time_delivery']
     
-    four = data.get('four')
+    fourth_message = data.get('fourth_message')
     
-    if four is None:
-        messeges = ([data["first"], data["second"],
-                    data["thread"], data["six"], 
-                    data["seven"],data["eight"], 
-                    data["nine"], ten])
-        
+    if fourth_message is None:
+        messeges = ([data["first_message"], data["second_message"],
+                    data["third_message"], data["sixth_message"], 
+                    data["seventh_message"],data["eighth_message"], 
+                    data["ninth_message"], tenth_message])
     else:
-        messeges = ([data["first"], data["second"], 
-                    data["thread"], data["four"], 
-                    data["five"], data["six"], 
-                    data["seven"],data["eight"], 
-                    data["nine"], ten])
+        messeges = ([data["first_message"], data["second_message"], 
+                    data["third_message"], data["fourth_message"], 
+                    data["fifth_message"], data["sixth_message"], 
+                    data["seventh_message"],data["eighth_message"], 
+                    data["ninth_message"], tenth_message])
         
     text = f'<b>Отлично, ваши данные по заказу сохранены! Отправить заказ администратору?\n\nПозиции - {pozition}\nКонтакт - {phone_number}\nСпособ получения - {adres}\nВремя получения заказа - {time_delivery}\nКоментарий к заказу - {coment_delivery}\n\nВсе верно?</b>'
     
-    await message.answer(text = text, reply_markup=kb.order_yes_no_user)
+    await message.answer(text = text, reply_markup=kb_order.order_yes_no_user)
     
     await message.bot.delete_messages(chat_id=message.from_user.id, message_ids=messeges)
     await state.update_data(coment_delivery = coment_delivery)
@@ -263,5 +278,5 @@ async def call_phone_order(callback: CallbackQuery):
     
     text = f'<b>Сделайте заказ позвонив по данному номеру!\n{PHONE_NUMBER}</b>'
     
-    await callback.message.edit_caption(caption=text, reply_markup=kb.back_to_ordering)
+    await callback.message.edit_caption(caption=text, reply_markup=kb_order.back_to_ordering)
     

@@ -1,10 +1,10 @@
 from aiogram import Router, F
-from aiogram.types import  CallbackQuery, InputMediaPhoto
-from aiogram.fsm.state import State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import  CallbackQuery, InputMediaPhoto
 
+import app.keyboards.menu_buttons as kb_menu
 from app.media.photos_id import MAIN_MENU_PHOTO
-import app.keyboards.menu_buttons as kb
+
 
 # Роутер
 menu_rt = Router()
@@ -17,7 +17,7 @@ async def menu_in_cafe(callback: CallbackQuery):
     text = f'<b>Вам предоставлено меню, пожалуйста ознакомьтесь с ним</b>' 
     media = InputMediaPhoto(media=main_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.main_menu_cafe)
+    await callback.message.edit_media(media = media, reply_markup=kb_menu.main_menu_cafe)
 
 # Меню дома 
 @menu_rt.callback_query(F.data == 'menu_home')
@@ -26,7 +26,7 @@ async def menu_in_home(callback: CallbackQuery):
     main_menu_photo = MAIN_MENU_PHOTO # Фото главного фото меню
     text = f'<b>Вам предоставлено меню, пожалуйста ознакомьтесь с ним\nЧто бы вы хотели заказать?</b>' 
     media = InputMediaPhoto(media=main_menu_photo, caption=text)
-    await callback.message.edit_media(media = media, reply_markup=kb.main_menu_home)
+    await callback.message.edit_media(media = media, reply_markup=kb_menu.main_menu_home)
 
 # Обработчик для кнопки назад
 @menu_rt.callback_query(F.data == 'back_menu')
