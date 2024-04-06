@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_ORDER_PHOTO
 
-import app.keyboards.userkb as kb
+import app.keyboards.order_buttons as kb
 from app.database.requests import user_yes_no, get_phone_number, get_adres_user
 
 import asyncio
@@ -54,7 +54,7 @@ async def pozition(message: Message, state: FSMContext):
     
     if await user_yes_no(message.from_user.id):
         text = f'<b>Введите ваш номер телефона, для обратной связи или нажмите на кнопку ниже, чтобы поделиться им</b>'
-        thread = await message.answer(text = text, reply_markup=kb.phone_number_book)
+        thread = await message.answer(text = text, reply_markup=kb.phone_number_in_order)
         await state.set_state(Order.phone_number)
         await state.update_data(second = second,thread = thread.message_id, pozition = pozition)
     else:

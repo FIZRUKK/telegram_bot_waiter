@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import  CallbackQuery, InputMediaPhoto
 
-import app.keyboards.userkb as kb
+import app.keyboards.menu_buttons as kb
 from app.media.photos_id import (NEW_MENU_PHOTO, BURGERS_MENU_PHOTO, HOT_DISHES_MENU_PHOTO,
                                 HOT_ROLLS_MENU_PHOTO, OPEN_ROLLS_MENU_PHOTO, 
                                 CLOSSE_ROLLS_MENU_PHOTO,
@@ -19,7 +19,7 @@ async def new(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=new_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb.back_in_menu)
 
 # Бургеры
 @punkt_rt.callback_query(F.data == 'burgers')
@@ -29,7 +29,7 @@ async def burgers(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=burgers_menu_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.back_menu)
+    await callback.message.edit_media(media = media, reply_markup=kb.back_in_menu)
 
 # Горячие блюда
 @punkt_rt.callback_query(F.data == 'hot_dishes')

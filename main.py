@@ -1,29 +1,28 @@
 import asyncio
 
-
+# Импорт aiogram
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.bot import DefaultBotProperties
 
-
+# Импорт Токена
 from config import TOKEN
 
 # Импорты роутеров
+from app.handlers.user.order import order_rt
+from app.handlers.user.booking import book_rt 
+from app.handlers.user.menu.menu import menu_rt
+from app.handlers.user.regestration import reg_rt
+from app.handlers.user.menu.menu_punkt import punkt_rt 
 from app.handlers.user.start.start_in_cafe import start_in_cafe_rt
 from app.handlers.user.start.start_in_home import start_in_home_rt
 
-from app.handlers.user.menu.menu import menu_rt
-from app.handlers.user.menu.menu_punkt import punkt_rt 
-
-from app.handlers.user.regestration import reg_rt
-
-from app.handlers.user.booking import book_rt 
-from app.handlers.user.order import order_rt
-
+# импорты модулей
 from app.database.models import async_main
 
 
 
+# Main функция
 async def main():
     await async_main()
     

@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 
 from app.database.requests import input_user
-import app.keyboards.userkb as kb
+import app.keyboards.main_buttons as kb
 
 import asyncio
 

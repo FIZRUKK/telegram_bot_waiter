@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, FSInputFile, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram.filters import CommandStart
 
 
@@ -7,7 +7,7 @@ from aiogram.filters import CommandStart
 from app.database.requests import user_yes_no
 from app.media.photos_id import MAIN_PHOTO_NOT_PLACE
 
-import app.keyboards.userkb as kb
+import app.keyboards.main_buttons as kb
 
 
 # Роутер

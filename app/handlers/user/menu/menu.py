@@ -4,7 +4,7 @@ from aiogram.fsm.state import State
 from aiogram.fsm.context import FSMContext
 
 from app.media.photos_id import MAIN_MENU_PHOTO
-import app.keyboards.userkb as kb
+import app.keyboards.menu_buttons as kb
 
 # Роутер
 menu_rt = Router()

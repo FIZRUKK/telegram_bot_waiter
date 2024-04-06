@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from config import PHONE_NUMBER, MAIN_ADMIN
 from app.media.photos_id import MAIN_BOOKING_PHOTO
 
-import app.keyboards.userkb as kb
+import app.keyboards.booking_buttons as kb
 from app.database.requests import user_yes_no, get_phone_number
 
 import asyncio
@@ -34,7 +34,7 @@ async def main_booking(callback: CallbackQuery):
     
     media = InputMediaPhoto(media=booking_photo, caption=text)
     
-    await callback.message.edit_media(media = media, reply_markup=kb.book_button)
+    await callback.message.edit_media(media = media, reply_markup=kb.booking_button)
 
 # Если бронь по телефону    
 @book_rt.callback_query(F.data == 'call_phone')
@@ -149,6 +149,7 @@ async def book_in_bot(callback: CallbackQuery, state: FSMContext):
         
         [InlineKeyboardButton(text = 'Полная посадка', callback_data=f'full_{user_id}')]
     ])
+    
     text = f'<b>Новая бронь!\nИмя - {callback.message.from_user.first_name}\nНомер телефона - {data["phone_number"]}\nКол-во человек - {data["count_people"]}\nВремя - {data["time_book"]}\nКоментарий - {data["coment_message"]}\nUserId - {user_id}</b>'
     
     await callback.bot.send_message(chat_id=MAIN_ADMIN, text=text, reply_markup=yes_no_book)

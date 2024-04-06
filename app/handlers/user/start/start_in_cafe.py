@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from config import ADMINS, PLACE_NAME
 from app.media.photos_id import MAiN_PHOTO_IN_PLACE
 
-import app.keyboards.userkb as kb
+import app.keyboards.main_buttons as kb
 
 # Роутер
 start_in_cafe_rt = Router()
