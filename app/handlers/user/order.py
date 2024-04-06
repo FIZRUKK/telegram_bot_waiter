@@ -57,7 +57,7 @@ async def pozition(message: Message, state: FSMContext):
         third_message = await message.answer(text = text, reply_markup=kb_order.phone_number_in_order)
         await state.set_state(Order.phone_number)
         
-        await state.update_data(second = second_message, 
+        await state.update_data(second_message = second_message, 
                                 third_message = third_message.message_id, pozition = pozition)
     else:
         phone_number = await get_phone_number(message.from_user.id)
@@ -66,7 +66,7 @@ async def pozition(message: Message, state: FSMContext):
         
         await state.update_data(phone_number = phone_number, 
                                 third_message = third_message.message_id, 
-                                pozition = pozition, second = second_message) 
+                                pozition = pozition, second_message = second_message) 
         
         await state.set_state(Order.adres)
 
@@ -124,7 +124,24 @@ async def adres_sam(message: Message, state: FSMContext):
     
     seventh_message = await message.answer(text = text, reply_markup=kb_order.order_time)
     
-    await state.update_data(six = sixth_message, 
+    await state.update_data(sixth_message = sixth_message, 
+                            adres = adres, 
+                            seventh_message = seventh_message.message_id)
+    
+    await state.set_state(Order.time)
+    
+# Обработчик если самовывоз
+@order_rt.message(Order.adres)
+async def adres(message: Message, state: FSMContext):
+    
+    sixth_message = message.message_id
+    adres = message.text
+    
+    text = f'<b>Отлично, мы записали ваш адрес. Введите на какое время сделать доставку/самовывоз?\n\nПример\n<i>18 апреля к 18:00</i></b>'
+    
+    seventh_message = await message.answer(text = text, reply_markup=kb_order.order_time)
+    
+    await state.update_data(sixth_message = sixth_message, 
                             adres = adres, 
                             seventh_message = seventh_message.message_id)
     
